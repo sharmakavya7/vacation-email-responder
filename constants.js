@@ -1,5 +1,7 @@
 require("dotenv").config();
 
+// creating objects auth and mailoptions (for sending email)
+
 const auth = {
   type: "OAuth2",
   user: "sharmakavya1002@gmail.com",
@@ -10,7 +12,7 @@ const auth = {
 
 const mailoptions = {
   from: "Kavya <sharmakavya1002@gmail.com>",
-  to: "sharmakavya1002@gmail.com",
+  to: "aditipandey256@gmail.com",
   subject: "vacation-email-responder",
 };
 
