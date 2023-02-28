@@ -12,7 +12,7 @@ const auth = {
 
 const mailoptions = {
   from: "Kavya <sharmakavya1002@gmail.com>",
-  to: "aditipandey256@gmail.com",
+  to: ["officiallycreated7@gmail.com"], 
   subject: "vacation-email-responder",
 };
 

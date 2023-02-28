@@ -14,4 +14,6 @@ router.get('/mail/drafts/:email', controllers.getDrafts);
 // Gets an email from its message ID
 router.get('/mail/read/:messageId', controllers.readMail);
 
+router.get('/mail/list/:email', controllers.getMessage); 
+
 module.exports = router

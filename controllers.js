@@ -3,6 +3,8 @@ const { generateConfig } = require("./utils");
 const nodemailer = require("nodemailer");
 const CONSTANTS = require("./constants");
 const { google } = require("googleapis");
+const { prettyPrintJson } = require('pretty-print-json'); 
+
 
 require("dotenv").config();
 
@@ -61,6 +63,8 @@ async function getUser(req, res) {
       const config = generateConfig(url, token);
       const response = await axios(config);
       // the result is not json, input: json and producing a javascript obj
+      const drafts = response.data.drafts;
+      console.log(drafts.length); 
       res.json(response.data);
     } catch (error) {
       console.log(error);
@@ -76,7 +80,7 @@ async function getUser(req, res) {
       const response = await axios(config);
   
       let data = await response.data;
-  
+      console.log(data);
       res.json(data);
     } catch (error) {
       res.send(error);
@@ -97,12 +101,64 @@ async function searchMail(req,res){
     }
 };
 
+async function getMessage(req,res){
+  try{
+      // const url=`https://www.googleapis.com/gmail/v1/users/me/messages?q=${req.params.search}`
+      const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages`
+      const {token} = await oAuth2Client.getAccessToken();        
+      const config = generateConfig(url,token)
+      const response = await axios(config);
+      res.json(response.data)
+  }catch(error){
+      console.log(error)
+      res.send(error)
+  }
+};
+// const auth = {...CONSTANTS.auth};
+
+// function listMessages(auth) {
+//   return new Promise((resolve, reject) => {
+//     const gmail = google.gmail({ auth: auth, version: 'v1' });
+
+//     gmail.users.messages.list(      
+//       {        
+//         userId: 'me',             
+//       },(err, res) => {
+//         if (err) {                    
+//           reject(err);          
+//           return;        
+//         }        
+//         if (!res.data.messages) {                    
+//           resolve([]);          
+//           return;        
+//         }                
+//         resolve(res.data.messages);      
+//       }    
+//     );
+//   })
+// }
+
+// function getMessage(messageId, auth) {
+//   const gmail = google.gmail({ auth: auth, version: 'v1' });
+  
+//   const response = gmail.users.messages.get({
+//     'userId': 'me',
+//     'id': messageId
+//   });
+//   console.log(response.data);
+// }
+
+// const messages = listMessages(auth, 'label:inbox subject:reminder');
+
+// console.log(listLabels(auth));
+
 module.exports = {
     getUser,
     sendMail,
     getDrafts,
     searchMail,
     readMail,
+    getMessage
 };
 
 // const filteredProduct = drafts.filter(messageObj => !!messageObj.message?.threadId);
