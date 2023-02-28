@@ -5,7 +5,6 @@ const CONSTANTS = require("./constants");
 const { google } = require("googleapis");
 const { prettyPrintJson } = require('pretty-print-json'); 
 
-
 require("dotenv").config();
 
 const oAuth2Client = new google.auth.OAuth2(
@@ -108,49 +107,53 @@ async function getMessage(req,res){
       const {token} = await oAuth2Client.getAccessToken();        
       const config = generateConfig(url,token)
       const response = await axios(config);
+      const list = response.data;
+      console.log(list);
       res.json(response.data)
   }catch(error){
       console.log(error)
       res.send(error)
   }
 };
-// const auth = {...CONSTANTS.auth};
 
-// function listMessages(auth) {
-//   return new Promise((resolve, reject) => {
-//     const gmail = google.gmail({ auth: auth, version: 'v1' });
+// const gmail = google.gmail({
+//   version: 'v1',
+//   auth: {
+//     ...CONSTANTS.auth,
+//   },
+// });
 
-//     gmail.users.messages.list(      
-//       {        
-//         userId: 'me',             
-//       },(err, res) => {
-//         if (err) {                    
-//           reject(err);          
-//           return;        
-//         }        
-//         if (!res.data.messages) {                    
-//           resolve([]);          
-//           return;        
-//         }                
-//         resolve(res.data.messages);      
-//       }    
-//     );
-//   })
+// async function getUnrepliedMessages() {
+//   const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages`
+//   const {token} = await oAuth2Client.getAccessToken();        
+//   const config = generateConfig(url,token)
+//   const response = await axios(config);
+//   const list = response.data;
+//   const listArray = Object.values(list);
+//   // loop through the list of messages
+//   const unrepliedMessages = [];
+//   for (const message of listArray) {
+//     // fetch the thread for the message
+//     const thread = await gmail.users.threads.get({userId: 'me', id: message.threadId});
+
+//     // check if any of the messages in the thread were sent by the user
+//     let replied = false;
+//     for (const threadMessage of thread.data.messages) {
+//       if (threadMessage.labelIds.includes('SENT') && threadMessage.from.emailAddress === 'sharmakavya1002@gmail.com') {
+//         replied = true;
+//         break;
+//       }
+//     }
+
+//     // if the user hasn't replied to the thread, add it to the list of unreplied messages
+//     if (!replied) {
+//       unrepliedMessages.push(thread);
+//     }
+//   }
+
+//   return unrepliedMessages;
 // }
-
-// function getMessage(messageId, auth) {
-//   const gmail = google.gmail({ auth: auth, version: 'v1' });
-  
-//   const response = gmail.users.messages.get({
-//     'userId': 'me',
-//     'id': messageId
-//   });
-//   console.log(response.data);
-// }
-
-// const messages = listMessages(auth, 'label:inbox subject:reminder');
-
-// console.log(listLabels(auth));
+// console.log(getUnrepliedMessages());
 
 module.exports = {
     getUser,
