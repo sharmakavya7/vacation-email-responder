@@ -3,7 +3,6 @@ const { generateConfig } = require("./utils");
 const nodemailer = require("nodemailer");
 const CONSTANTS = require("./constants");
 const { google } = require("googleapis");
-const { prettyPrintJson } = require('pretty-print-json'); 
 
 require("dotenv").config();
 
@@ -26,12 +25,14 @@ async function sendMail(req, res) {
       },
     });
 
-    const mailOptions = {
-      ...CONSTANTS.mailoptions,
+    const mailoptions = {
+      from: "Kavya <sharmakavya1002@gmail.com>",
+      to: freshEmails, 
+      subject: "vacation-email-responder",
       text: "Hey, I am on a vacation",
     };
 
-    const result = await transport.sendMail(mailOptions);
+    const result = await transport.sendMail(mailoptions);
     res.send(result);
   } catch (error) {
     console.log(error);
@@ -70,22 +71,6 @@ async function getUser(req, res) {
       return error;
     }
   }
-
-  async function readMail(req, res) {
-    try {
-      const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages/${req.params.messageId}`;
-      const { token } = await oAuth2Client.getAccessToken();
-      const config = generateConfig(url, token);
-      const response = await axios(config);
-  
-      let data = await response.data;
-      console.log(data);
-      res.json(data);
-    } catch (error) {
-      res.send(error);
-    }
-  }
-// http://localhost:8000/api/mail/read/17f63b4513fb51c0
 async function searchMail(req,res){
     try{
         const url=`https://www.googleapis.com/gmail/v1/users/me/messages?q=${req.params.search}`
@@ -100,60 +85,79 @@ async function searchMail(req,res){
     }
 };
 
+const freshEmails = [];
+async function readMail(req, res) {
+  try {
+    // console.log("idd:" + idd);
+    const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages/${req.params.messageId}`;
+    const { token } = await oAuth2Client.getAccessToken();
+    const config = generateConfig(url, token);
+    const response = await axios(config);
+    let dataa = await response.data;
+    // console.log(dataa);
+    // for(var i=0; i<dataa.payload.headers.length; i++) {
+    //   for(var keyy in dataa.payload.headers[i]) {
+    //     if(dataa.payload.headers[i][keyy] === "From") {
+    //       const val = dataa.payload.headers[i].value        
+    //       // console.log(val);
+    //       var matches = val.match(/\<(.*?)\>/);
+    //       if (matches) {
+    //         var submatch = matches[1];
+    //       }
+    //       // console.log(submatch);
+    //       freshEmails.push(submatch);
+    //     }
+    //   }
+    // }
+    
+    // const val = dataa.payload.headers[18].value;
+    // console.log(val);
+    console.log(freshEmails);
+    // sendMail(freshEmails);
+    res.json(dataa);
+    // return freshEmails;
+  } catch (error) {
+    // console.log(error)
+    // res.send(error);
+  }
+}
+const msgIdlist = new Set();
 async function getMessage(req,res){
-  try{
+  try {
       // const url=`https://www.googleapis.com/gmail/v1/users/me/messages?q=${req.params.search}`
       const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages`
       const {token} = await oAuth2Client.getAccessToken();        
-      const config = generateConfig(url,token)
+      const config = generateConfig(url,token);
       const response = await axios(config);
+      // list.push(response.data);
       const list = response.data;
-      console.log(list);
-      res.json(response.data)
+      // console.log(list);
+      for(var i=0; i<list.messages.length; i++) {
+        for(var keyy in list.messages[i]) {
+          // console.log(keyy + ' ' + list.messages[i][keyy]);
+          if(list.messages[i].id === list.messages[i].threadId) {
+            // console.log(list.messages[i][keyy]);
+            msgIdlist.add(list.messages[i].id);
+          }
+        }
+      }
+      console.log(msgIdlist);
+      console.log(msgIdlist.size);
+      // const emailList = await readMail();
+      // console.log("emailList: " + emailList);
+      res.json(response.data);
   }catch(error){
       console.log(error)
       res.send(error)
   }
 };
 
-// const gmail = google.gmail({
-//   version: 'v1',
-//   auth: {
-//     ...CONSTANTS.auth,
-//   },
-// });
-
-// async function getUnrepliedMessages() {
-//   const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages`
-//   const {token} = await oAuth2Client.getAccessToken();        
-//   const config = generateConfig(url,token)
-//   const response = await axios(config);
-//   const list = response.data;
-//   const listArray = Object.values(list);
-//   // loop through the list of messages
-//   const unrepliedMessages = [];
-//   for (const message of listArray) {
-//     // fetch the thread for the message
-//     const thread = await gmail.users.threads.get({userId: 'me', id: message.threadId});
-
-//     // check if any of the messages in the thread were sent by the user
-//     let replied = false;
-//     for (const threadMessage of thread.data.messages) {
-//       if (threadMessage.labelIds.includes('SENT') && threadMessage.from.emailAddress === 'sharmakavya1002@gmail.com') {
-//         replied = true;
-//         break;
-//       }
-//     }
-
-//     // if the user hasn't replied to the thread, add it to the list of unreplied messages
-//     if (!replied) {
-//       unrepliedMessages.push(thread);
-//     }
-//   }
-
-//   return unrepliedMessages;
-// }
-// console.log(getUnrepliedMessages());
+/*
+            // console.log(list.messages[i].id);
+            const emailList = await readMail(req, res, list.messages[i].id);
+            console.log(emailList);
+            // console.log(freshEmails)
+*/
 
 module.exports = {
     getUser,
@@ -163,6 +167,13 @@ module.exports = {
     readMail,
     getMessage
 };
+
+
+
+// to hume basically krna ye hai ki
+// - hum realtime reply krre hai right, jaise hi koi bhi fresh mail aaega to uska msgid and threadid
+// same hi hoga, to hume vo saare same wale collect krne hai (40sec tak)and unko reply kr dena hai
+
 
 // const filteredProduct = drafts.filter(messageObj => !!messageObj.message?.threadId);
 // console.log(filteredProduct);
