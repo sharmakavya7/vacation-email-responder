@@ -68,36 +68,3 @@ async function listLabels(auth) {
 }
 
 authorize().then(listLabels).catch(console.error);
-
-// drafts = [];
-// toReply = drafts.filter(draftMessage => {Objects.notNull(draftMessage.message.threadID)})
-
-
-
-  // drafts: [
-  //   {
-  //     id: "r8201799876426634352", 
-  //     message: { 
-  //       id: "17f63b4513fb51c0", 
-  //       threadId: "17f63b4513fb51c0"
-  //     }
-  
-  //   }, 
-  //   {
-  //     id: "r2258291167242889308", 
-  //     message: { 
-  //       id: "17f5abbdc42b8dfe", 
-  //       threadId: "17f5abbd7d8e80a7"
-  //     },
-  //   },
-  
-  //   {
-  //     id: "r7150463057858570207", 
-  //     message: { 
-  //       id: "17f5981268fb3b83", 
-  //       threadId: "17f59811c004f220" 
-  //     },
-  //   },
-  // ]
-  
-  

@@ -9,7 +9,7 @@ app.listen(process.env.PORT, () => {
   console.log("listening on port " + process.env.PORT);
 });
 
-app.use('/api',routes);
+app.use('/vacation-mail-responder',routes);
 
 app.get("/", async (req, res) => {
   // const result=await sendMail();

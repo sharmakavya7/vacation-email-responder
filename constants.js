@@ -10,13 +10,6 @@ const auth = {
   refreshToken: process.env.REFRESH_TOKEN,
 };
 
-const mailoptions = {
-  from: "Kavya <sharmakavya1002@gmail.com>",
-  to: ["officiallycreated7@gmail.com"], 
-  subject: "vacation-email-responder",
-};
-
 module.exports = {
-  auth,
-  mailoptions,
+  auth
 };
