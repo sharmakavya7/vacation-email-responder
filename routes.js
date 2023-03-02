@@ -2,17 +2,11 @@ const express = require('express');
 const controllers=require('./controllers');
 const router = express.Router();
 
-// Fetches information about a Gmail user
-router.get('/mail/user/:email',controllers.getUser)
-
 // Sends an email via Nodemailer
-router.get('/mail/send',controllers.sendMail);
-
-// Gets all the drafts for a user
-router.get('/mail/drafts/:email', controllers.getDrafts);
+// router.get('/mail/send',controllers.sendMail);
 
 // Gets an email from its message ID
-router.get('/mail/read/:messageId', controllers.readMail);
+// router.get('/mail/read/:messageId', controllers.readMail);
 
 router.get('/mail/list/:email', controllers.getMessage); 
 

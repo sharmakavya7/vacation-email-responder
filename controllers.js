@@ -14,7 +14,7 @@ const oAuth2Client = new google.auth.OAuth2(
 
 oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
-async function sendMail(req, res) {
+async function sendMail(emailId) {
   try {
     const accessToken = await oAuth2Client.getAccessToken();
     const transport = nodemailer.createTransport({
@@ -27,92 +27,45 @@ async function sendMail(req, res) {
 
     const mailoptions = {
       from: "Kavya <sharmakavya1002@gmail.com>",
-      to: freshEmails, 
+      to: emailId, 
       subject: "vacation-email-responder",
       text: "Hey, I am on a vacation",
     };
 
-    const result = await transport.sendMail(mailoptions);
-    res.send(result);
+    await transport.sendMail(mailoptions);
+    // res.send(result);
   } catch (error) {
-    console.log(error);
-    res.send(error);
+    // console.log(error);
+    // res.send(error);
   }
 }
 
-// get a email user
-async function getUser(req, res) {
-    try {
-      const url = `https://gmail.googleapis.com/gmail/v1/users/${req.params.email}/profile`;
-      const { token } = await oAuth2Client.getAccessToken();
-      const config = generateConfig(url, token);
-      const response = await axios(config);
-      res.json(response.data);
-    } catch (error) {
-      console.log(error);
-      res.send(error);
-    }
-  }
-
-  // It gives us back a bunch of draft IDs and corresponding message information.
-  // Each message object has an id, which is the ID of the actual message, and a threadId.
-  async function getDrafts(req, res) {
-    try {
-      const url = `https://gmail.googleapis.com/gmail/v1/users/${req.params.email}/drafts`;
-      const { token } = await oAuth2Client.getAccessToken();
-      const config = generateConfig(url, token);
-      const response = await axios(config);
-      // the result is not json, input: json and producing a javascript obj
-      const drafts = response.data.drafts;
-      console.log(drafts.length); 
-      res.json(response.data);
-    } catch (error) {
-      console.log(error);
-      return error;
-    }
-  }
-async function searchMail(req,res){
-    try{
-        const url=`https://www.googleapis.com/gmail/v1/users/me/messages?q=${req.params.search}`
-        const {token}=await oAuth2Client.getAccessToken();        
-        const config=generateConfig(url,token)
-        const response=await axios(config);
-        console.log(response);
-        res.json(response.data)
-    }catch(error){
-        console.log(error)
-        res.send(error)
-    }
-};
-
-const freshEmails = [];
-async function readMail(req, res) {
+async function readMail(messageId) {
   try {
-    // console.log("idd:" + idd);
-    const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages/${req.params.messageId}`;
+    const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages/${messageId}`;
     const { token } = await oAuth2Client.getAccessToken();
     const config = generateConfig(url, token);
     const response = await axios(config);
     let dataa = await response.data;
     // console.log(dataa);
-    // for(var i=0; i<dataa.payload.headers.length; i++) {
-    //   for(var keyy in dataa.payload.headers[i]) {
-    //     if(dataa.payload.headers[i][keyy] === "From") {
-    //       const val = dataa.payload.headers[i].value        
-    //       // console.log(val);
-    //       var matches = val.match(/\<(.*?)\>/);
-    //       if (matches) {
-    //         var submatch = matches[1];
-    //       }
-    //       // console.log(submatch);
-    //       freshEmails.push(submatch);
-    //     }
-    //   }
-    // }
-    
+    const freshEmails = [];
+    for(var i=0; i<dataa.payload.headers.length; i++) {
+      for(var keyy in dataa.payload.headers[i]) {
+        if(dataa.payload.headers[i][keyy] === "From") {
+          const val = dataa.payload.headers[i].value        
+          // console.log(val);
+          var matches = val.match(/\<(.*?)\>/);
+          if (matches) {
+            var submatch = matches[1];
+          }
+          // console.log("submatch: " + submatch);
+          return submatch;
+        }
+      }
+    }
     // const val = dataa.payload.headers[18].value;
     // console.log(val);
-    console.log(freshEmails);
+    // console.log(freshEmails);
     // sendMail(freshEmails);
     res.json(dataa);
     // return freshEmails;
@@ -121,30 +74,34 @@ async function readMail(req, res) {
     // res.send(error);
   }
 }
-const msgIdlist = new Set();
+
+function getIDsToReply(list) {
+  const msgIdSet = new Set();
+  list.forEach(obj => {
+    if(obj.id === obj.threadId) {
+      msgIdSet.add(obj.id);
+    }
+  });
+  return msgIdSet;
+}
+
 async function getMessage(req,res){
   try {
-      // const url=`https://www.googleapis.com/gmail/v1/users/me/messages?q=${req.params.search}`
       const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages`
       const {token} = await oAuth2Client.getAccessToken();        
       const config = generateConfig(url,token);
       const response = await axios(config);
-      // list.push(response.data);
-      const list = response.data;
-      // console.log(list);
-      for(var i=0; i<list.messages.length; i++) {
-        for(var keyy in list.messages[i]) {
-          // console.log(keyy + ' ' + list.messages[i][keyy]);
-          if(list.messages[i].id === list.messages[i].threadId) {
-            // console.log(list.messages[i][keyy]);
-            msgIdlist.add(list.messages[i].id);
-          }
+      
+      const idSet = getIDsToReply(response.data.messages);
+      idSet.forEach(id => {
+        const emailId = readMail(id);
+        // console.log(emailId);
+        if(emailId === "officiallycreated7@gmail.com") {
+          console.log("hey");
+        } else {
+          console.log(".");
         }
-      }
-      console.log(msgIdlist);
-      console.log(msgIdlist.size);
-      // const emailList = await readMail();
-      // console.log("emailList: " + emailList);
+      });
       res.json(response.data);
   }catch(error){
       console.log(error)
@@ -152,18 +109,8 @@ async function getMessage(req,res){
   }
 };
 
-/*
-            // console.log(list.messages[i].id);
-            const emailList = await readMail(req, res, list.messages[i].id);
-            console.log(emailList);
-            // console.log(freshEmails)
-*/
-
 module.exports = {
-    getUser,
     sendMail,
-    getDrafts,
-    searchMail,
     readMail,
     getMessage
 };
