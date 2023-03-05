@@ -1,5 +1,5 @@
 const axios = require("axios");
-const { generateConfig } = require("./utils");
+const { generateConfig, findOccurrenceInList } = require("./utils");
 const nodemailer = require("nodemailer");
 const CONSTANTS = require("./constants");
 const { google } = require("googleapis");
@@ -16,6 +16,9 @@ const oAuth2Client = new google.auth.OAuth2(
 oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
 async function sendMail(emailId) {
+  if(!emailId) {
+    return;
+  }
   try {
     const accessToken = await oAuth2Client.getAccessToken();
     const transport = nodemailer.createTransport({
@@ -35,7 +38,7 @@ async function sendMail(emailId) {
 
     await transport.sendMail(mailoptions);
   } catch (error) {
-    console.log(error);
+    console.log("error in sendMail function", messageId);
   }
 }
 
@@ -60,40 +63,45 @@ async function readMail(messageId) {
     const { token } = await oAuth2Client.getAccessToken();
     const config = generateConfig(url, token);
     const response = await axios(config);
-    let dataa = await response.data;
-    return getEmailId(dataa);
+    return getEmailId(response.data);
   } catch (error) {
-    console.log(error);
+    console.log("error in readMail function", messageId);
+    return "-1";
   }
 }
 
 function getIDsToReply(list) {
-  const msgIdSet = new Set();
-  list.forEach(obj => {
-    if(obj.id === obj.threadId) {
-      msgIdSet.add(obj.id);
-    }
+  const msgIdsToReply = findOccurrenceInList(list);
+  const msgIdListToReply = [];
+  Object.keys(msgIdsToReply).forEach((key) => {
+    if(msgIdsToReply[key] === 1) {
+      msgIdListToReply.push(key);
+    } 
   });
-  return msgIdSet;
+  console.log(msgIdListToReply);
+  return msgIdListToReply;
 }
 
 function sendMailToIDs(idSet) {
   idSet.forEach(async (id) => {
     try{
       const emailId = await readMail(id);
+      if(emailId === "-1") {
+        return;
+      }
       if(emailId === "kavyaofficial711@gmail.com") {
         sendMail(emailId);
       }
     }
     catch(error){
-      console.log(error);
+      console.log("error in sendMailToIDs function", messageId);
     }
   });
 }
 
 async function getMessage(email){
   try {
-      const url = `https://gmail.googleapis.com/gmail/v1/users/${email}/messages`
+      const url = `https://gmail.googleapis.com/gmail/v1/users/${email}/messages?maxResults=100`
       const {token} = await oAuth2Client.getAccessToken();        
       const config = generateConfig(url,token);
       const response = await axios(config);
@@ -101,7 +109,7 @@ async function getMessage(email){
       const idSet = getIDsToReply(response.data.messages);
       sendMailToIDs(idSet);
   }catch(error){
-      console.log(error)
+    console.log("error in getMessage function", messageId);
   }
 };
 

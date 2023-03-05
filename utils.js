@@ -8,5 +8,21 @@ const generateConfig = (url, accessToken) => {
       },
     };
   };
+
+const findOccurrenceInList = (list) => {
+  const msgIdsToReply = {};
+  list.forEach((obj) => {
+    const {threadId} = obj;
+    if(!msgIdsToReply.hasOwnProperty(threadId)) {
+      msgIdsToReply[threadId] = 1;
+    } else {
+      msgIdsToReply[threadId]++;
+    }
+  });
+  return msgIdsToReply;
+};
   
-  module.exports = { generateConfig };
+module.exports = { 
+  generateConfig,
+  findOccurrenceInList
+ };
