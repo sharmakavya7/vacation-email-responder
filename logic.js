@@ -36,7 +36,34 @@ async function sendMail(emailId) {
       text: "Hey, I am on a vacation",
     };
 
-    await transport.sendMail(mailoptions);
+    // await transport.sendMail(mailoptions);
+    transport.sendMail(mailoptions, (err, info) => {
+      if(err) {
+        console.log(err);
+      } else {
+        // Add a label to the email message
+        const messageId = info.messageId;
+        const labelId = "AutoResponse";
+        const removeLabelId = "INBOX";
+
+        console.log(messageId);
+
+        gmail.users.messages.modify({
+          userId: 'me',
+          id: messageId,
+          resource: {
+            addLabelIds: [labelId],
+            removeLabelIds: [removeLabelId]
+          }
+        }, (err, res) => {
+          if (err) {
+            console.error(err);
+          } else {
+            console.log(res);
+          }
+        });
+      }
+    })
   } catch (error) {
     console.log("error in sendMail function", messageId);
   }
