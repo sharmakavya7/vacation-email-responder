@@ -15,7 +15,7 @@ const oAuth2Client = new google.auth.OAuth2(
 
 oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
-async function sendMail(emailId) {
+async function sendMail(emailId, subject) {
   if(!emailId) {
     return;
   }
@@ -32,7 +32,7 @@ async function sendMail(emailId) {
     const mailoptions = {
       from: "Kavya <sharmakavya1002@gmail.com>",
       to: emailId, 
-      subject: "Re: vacation-email-responder",
+      subject: `Re: ${subject}`,
       text: "Hey, I am on a vacation",
     };
 
@@ -46,7 +46,7 @@ async function sendMail(emailId) {
         const labelId = "AutoResponse";
         const removeLabelId = "INBOX";
 
-        console.log(messageId);
+        // console.log(messageId);
 
         gmail.users.messages.modify({
           userId: 'me',
@@ -69,19 +69,24 @@ async function sendMail(emailId) {
   }
 }
 
-function getEmailId(dataa) {
+function getEmailIdAndSubject(dataa) {
+  const result = {};
   for(var i=0; i<dataa.payload.headers.length; i++) {
     for(var keyy in dataa.payload.headers[i]) {
+      if(dataa.payload.headers[i][keyy] === "Subject") {
+        result.subject = dataa.payload.headers[i].value ;
+      }
       if(dataa.payload.headers[i][keyy] === "From") {
         const val = dataa.payload.headers[i].value        
         var matches = val.match(/\<(.*?)\>/);
         if (matches) {
           var submatch = matches[1];
+          result.email = submatch;
         }
-        return submatch;
       }
     }
   }
+  return result;
 }
 
 async function readMail(messageId) {
@@ -90,7 +95,7 @@ async function readMail(messageId) {
     const { token } = await oAuth2Client.getAccessToken();
     const config = generateConfig(url, token);
     const response = await axios(config);
-    return getEmailId(response.data);
+    return getEmailIdAndSubject(response.data);
   } catch (error) {
     console.log("error in readMail function", messageId);
     return "-1";
@@ -98,26 +103,25 @@ async function readMail(messageId) {
 }
 
 function getIDsToReply(list) {
-  const msgIdsToReply = findOccurrenceInList(list);
+  const freqOfThreadIdObj = findOccurrenceInList(list);
   const msgIdListToReply = [];
-  Object.keys(msgIdsToReply).forEach((key) => {
-    if(msgIdsToReply[key] === 1) {
+  Object.keys(freqOfThreadIdObj).forEach((key) => {
+    if(freqOfThreadIdObj[key] === 1) {
       msgIdListToReply.push(key);
     } 
   });
-  console.log(msgIdListToReply);
   return msgIdListToReply;
 }
 
 function sendMailToIDs(idSet) {
   idSet.forEach(async (id) => {
     try{
-      const emailId = await readMail(id);
-      if(emailId === "-1") {
+      const { email, subject } = await readMail(id);
+      if(email === "-1") {
         return;
       }
-      if(emailId === "kavyaofficial711@gmail.com") {
-        sendMail(emailId);
+      if(email === "rastogiritesh1340@gmail.com" ) {
+        sendMail(email, subject);
       }
     }
     catch(error){
@@ -128,11 +132,10 @@ function sendMailToIDs(idSet) {
 
 async function getMessage(email){
   try {
-      const url = `https://gmail.googleapis.com/gmail/v1/users/${email}/messages?maxResults=100`
+      const url = `https://gmail.googleapis.com/gmail/v1/users/${email}/messages?maxResults=200`;
       const {token} = await oAuth2Client.getAccessToken();        
       const config = generateConfig(url,token);
       const response = await axios(config);
-      
       const idSet = getIDsToReply(response.data.messages);
       sendMailToIDs(idSet);
   }catch(error){
