@@ -15,6 +15,37 @@ const oAuth2Client = new google.auth.OAuth2(
 
 oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
 
+async function modifyLabel(messageId, removeLabelIds) {
+  if(!messageId) {
+    return;
+  }
+  try {
+    const url = `https://gmail.googleapis.com/gmail/v1/users/${CONSTANTS.auth.user}/messages/${messageId}/modify`;
+    const {token} = await oAuth2Client.getAccessToken();        
+    const requestBody = {
+      addLabelIds: [
+        'RITESH'
+      ],
+      removeLabelIds
+    };
+    const headers = {
+      Authorization: `Bearer ${token} `,
+      "Content-type": "application/json",
+    };
+    axios.post(url, requestBody, {headers: headers})
+      .then(response => {
+        console.log(response.data);
+      })
+      .catch(error => {
+        // console.log("error");
+      });
+    
+  } catch (error) {
+    console.log("error in sendMail function", messageId);
+  }
+}
+
+
 async function sendMail(emailId, subject) {
   if(!emailId) {
     return;
@@ -35,42 +66,15 @@ async function sendMail(emailId, subject) {
       subject: `Re: ${subject}`,
       text: "Hey, I am on a vacation",
     };
-
-    // await transport.sendMail(mailoptions);
-    transport.sendMail(mailoptions, (err, info) => {
-      if(err) {
-        console.log(err);
-      } else {
-        // Add a label to the email message
-        const messageId = info.messageId;
-        const labelId = "AutoResponse";
-        const removeLabelId = "INBOX";
-
-        // console.log(messageId);
-
-        gmail.users.messages.modify({
-          userId: 'me',
-          id: messageId,
-          resource: {
-            addLabelIds: [labelId],
-            removeLabelIds: [removeLabelId]
-          }
-        }, (err, res) => {
-          if (err) {
-            console.error(err);
-          } else {
-            console.log(res);
-          }
-        });
-      }
-    })
+    await transport.sendMail(mailoptions);
   } catch (error) {
     console.log("error in sendMail function", messageId);
   }
 }
 
-function getEmailIdAndSubject(dataa) {
+function getEmailIdAndSubjectAndLabelIds(dataa) {
   const result = {};
+  result.removeLabelIds = dataa.labelIds;
   for(var i=0; i<dataa.payload.headers.length; i++) {
     for(var keyy in dataa.payload.headers[i]) {
       if(dataa.payload.headers[i][keyy] === "Subject") {
@@ -95,7 +99,10 @@ async function readMail(messageId) {
     const { token } = await oAuth2Client.getAccessToken();
     const config = generateConfig(url, token);
     const response = await axios(config);
-    return getEmailIdAndSubject(response.data);
+    const ans = getEmailIdAndSubjectAndLabelIds(response.data);
+    const {email, subject, removeLabelIds} = ans;
+    console.log(email + ' sub:' + subject + ' remove: '+removeLabelIds);
+    return ans;
   } catch (error) {
     console.log("error in readMail function", messageId);
     return "-1";
@@ -113,15 +120,16 @@ function getIDsToReply(list) {
   return msgIdListToReply;
 }
 
-function sendMailToIDs(idSet) {
-  idSet.forEach(async (id) => {
+async function sendMailToIDs(idList) {
+  idList.forEach(async (id) => {
     try{
       const { email, subject } = await readMail(id);
       if(email === "-1") {
         return;
       }
       if(email === "rastogiritesh1340@gmail.com" ) {
-        sendMail(email, subject);
+        await sendMail(email, subject);
+        // getMessage(1);
       }
     }
     catch(error){
@@ -129,17 +137,24 @@ function sendMailToIDs(idSet) {
     }
   });
 }
-
-async function getMessage(email){
+async function getMessage(maxMessagesToFetch){
   try {
-      const url = `https://gmail.googleapis.com/gmail/v1/users/${email}/messages?maxResults=200`;
+      const url = `https://gmail.googleapis.com/gmail/v1/users/${CONSTANTS.auth.user}/messages?maxResults=${maxMessagesToFetch}`;
       const {token} = await oAuth2Client.getAccessToken();        
       const config = generateConfig(url,token);
       const response = await axios(config);
-      const idSet = getIDsToReply(response.data.messages);
-      sendMailToIDs(idSet);
+
+      const idList = getIDsToReply(response.data.messages);
+      if(maxMessagesToFetch === 1) {
+        const messageIdOfSentMessage = idList[0];
+        const { removeLabelIds } = readMail(messageIdOfSentMessage);
+        await modifyLabel(messageIdOfSentMessage, removeLabelIds);
+      } 
+      else {
+        await sendMailToIDs(idList);
+      }
   }catch(error){
-    console.log("error in getMessage function", messageId);
+    console.log(error);
   }
 };
 

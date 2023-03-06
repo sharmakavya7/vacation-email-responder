@@ -1,8 +1,7 @@
 const logic = require('./logic');
 
 function repeat(req, res) {
-  const email = req.params.email;
-  logic.getMessage(email);
+  logic.getMessage(500);
   res.send("People have been notified about you being on a vacation");
 }
   
