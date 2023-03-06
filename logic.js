@@ -19,15 +19,14 @@ async function modifyLabel(messageId, removeLabelIds) {
   if(!messageId) {
     return;
   }
-  console.log("remove: "+removeLabelIds);
   try {
     const url = `https://gmail.googleapis.com/gmail/v1/users/${CONSTANTS.auth.user}/messages/${messageId}/modify`;
     const {token} = await oAuth2Client.getAccessToken();        
     const requestBody = {
       addLabelIds: [
-        'CATEGORY_PERSONAL'
+        'CATEGORY_SOCIAL'
       ],
-      removeLabelIds: ["INBOX"]
+      // removeLabelIds: ["INBOX"]
     };
     const headers = {
       Authorization: `Bearer ${token} `,
@@ -38,11 +37,11 @@ async function modifyLabel(messageId, removeLabelIds) {
         console.log(response.data);
       })
       .catch(error => {
-        console.log(error + "error");
+        console.log(".");
       });
     
   } catch (error) {
-    console.log("error in sendMail function", messageId);
+    console.log(".");
   }
 }
 
@@ -68,11 +67,11 @@ async function sendMail(emailId, subject) {
     };
     await transport.sendMail(mailoptions);
   } catch (error) {
-    console.log("error in sendMail function", messageId);
+    console.log(".");
   }
 }
 
-function getEmailIdAndSubjectAndLabelIds(dataa, temp) {
+function getEmailIdAndSubjectAndLabelIds(dataa) {
   const result = {};
   result.removeLabelIds = dataa.labelIds;
   for(var i=0; i<dataa.payload.headers.length; i++) {
@@ -93,16 +92,16 @@ function getEmailIdAndSubjectAndLabelIds(dataa, temp) {
   return result;
 }
 
-async function readMail(messageId, temp) {
+async function readMail(messageId) {
   try {
     const url = `https://gmail.googleapis.com/gmail/v1/users/sharmakavya1002@gmail.com/messages/${messageId}`;
     const { token } = await oAuth2Client.getAccessToken();
     const config = generateConfig(url, token);
     const response = await axios(config);
-    const ans = getEmailIdAndSubjectAndLabelIds(response.data, temp);
+    const ans = getEmailIdAndSubjectAndLabelIds(response.data);
     return ans;
   } catch (error) {
-    console.log("error in readMail function", messageId);
+    console.log("..");
     return "-1";
   }
 }
@@ -131,7 +130,7 @@ async function sendMailToIDs(idList) {
       }
     }
     catch(error){
-      console.log("error in sendMailToIDs function", messageId);
+      console.log(".");
     }
   });
 }
@@ -145,7 +144,7 @@ async function getMessage(maxMessagesToFetch){
       const idList = getIDsToReply(response.data.messages);
       if(maxMessagesToFetch === 1) {
         const messageIdOfSentMessage = idList[0];
-        const ans = await readMail(messageIdOfSentMessage, 2);
+        const ans = await readMail(messageIdOfSentMessage);
         await modifyLabel(messageIdOfSentMessage, ans.removeLabelIds);
       } 
       else {
