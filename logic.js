@@ -24,9 +24,9 @@ async function modifyLabel(messageId, removeLabelIds) {
     const {token} = await oAuth2Client.getAccessToken();        
     const requestBody = {
       addLabelIds: [
-        'CATEGORY_SOCIAL'
+        'Label_3820175354305268417'
       ],
-      // removeLabelIds: ["INBOX"]
+      removeLabelIds: ["INBOX"]
     };
     const headers = {
       Authorization: `Bearer ${token} `,
@@ -58,7 +58,6 @@ async function sendMail(emailId, subject) {
         accessToken: accessToken,
       },
     });
-
     const mailoptions = {
       from: "Kavya <sharmakavya1002@gmail.com>",
       to: emailId, 
@@ -124,7 +123,7 @@ async function sendMailToIDs(idList) {
       if(email === "-1") {
         return;
       }
-      if(email === "rastogiritesh1340@gmail.com" || email === "riteshrastogi1340@gmail.com" || email == "kavyaofficial711@gmail.com") {
+      if(email === "pradyumna@openinapp.com" || email == "kavyaofficial711@gmail.com") {
         await sendMail(email, subject);
         getMessage(1);
       }
